@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/di/app_dependencies.dart';
 import '../../domain/entities/friend_profile.dart';
-import '../../domain/services/video_call_room_service.dart';
 import 'call_connecting_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
@@ -25,11 +24,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   static const Color _gold = Color(0xFFE0C238);
   static const Color _panelBackground = Color(0xFF1E161D);
   static const Color _panelBorder = Color(0xFF342730);
-  static const String _callerName = 'Varun';
 
   final List<FriendProfile> friends = AppDependencies.getFriends();
-  final VideoCallRoomService _videoCallRoomService =
-      const VideoCallRoomService();
 
   /*
     {
@@ -782,12 +778,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           name: name,
           imagePath: imagePath,
           isVideoCall: isVideoCall,
-          videoCallUrl: isVideoCall
-              ? _videoCallRoomService.roomUrlFor(
-                  callerName: _callerName,
-                  friendName: name,
-                )
-              : null,
         ),
       ),
     );

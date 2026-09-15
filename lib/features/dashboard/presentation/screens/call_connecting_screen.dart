@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class CallConnectingScreen extends StatefulWidget {
   const CallConnectingScreen({
@@ -10,13 +8,11 @@ class CallConnectingScreen extends StatefulWidget {
     required this.name,
     required this.imagePath,
     required this.isVideoCall,
-    this.videoCallUrl,
   });
 
   final String name;
   final String imagePath;
   final bool isVideoCall;
-  final Uri? videoCallUrl;
 
   @override
   State<CallConnectingScreen> createState() => _CallConnectingScreenState();
@@ -25,8 +21,6 @@ class CallConnectingScreen extends StatefulWidget {
 class _CallConnectingScreenState extends State<CallConnectingScreen> {
   Timer? _timer;
   int _elapsedSeconds = 0;
-  bool _isOpeningVideoCall = false;
-  String? _launchError;
 
   @override
   void initState() {
@@ -41,12 +35,6 @@ class _CallConnectingScreenState extends State<CallConnectingScreen> {
         _elapsedSeconds += 1;
       });
     });
-
-    if (widget.isVideoCall && widget.videoCallUrl != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _openVideoCall();
-      });
-    }
   }
 
   @override
@@ -110,7 +98,7 @@ class _CallConnectingScreenState extends State<CallConnectingScreen> {
                       const SizedBox(height: 12),
                       Text(
                         widget.isVideoCall
-                            ? 'Opening your free video call room'
+                            ? 'Your video call has started'
                             : 'Your call has started',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
@@ -128,10 +116,6 @@ class _CallConnectingScreenState extends State<CallConnectingScreen> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      if (widget.isVideoCall && widget.videoCallUrl != null) ...[
-                        const SizedBox(height: 22),
-                        _buildVideoCallActions(),
-                      ],
                     ],
                   ),
                 ),
@@ -186,116 +170,5 @@ class _CallConnectingScreenState extends State<CallConnectingScreen> {
     final String minuteLabel = minutes.toString().padLeft(2, '0');
     final String secondLabel = seconds.toString().padLeft(2, '0');
     return '$minuteLabel:$secondLabel';
-  }
-
-  Widget _buildVideoCallActions() {
-    return Column(
-      children: [
-        SizedBox(
-          width: 210,
-          height: 46,
-          child: FilledButton.icon(
-            onPressed: _isOpeningVideoCall ? null : _openVideoCall,
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFE0C238),
-              foregroundColor: Colors.black,
-              disabledBackgroundColor: const Color(0xFF6B5D28),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ),
-            icon: _isOpeningVideoCall
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.black,
-                    ),
-                  )
-                : const Icon(Icons.open_in_new),
-            label: Text(_isOpeningVideoCall ? 'Opening...' : 'Open video room'),
-          ),
-        ),
-        const SizedBox(height: 10),
-        TextButton.icon(
-          onPressed: _copyVideoCallLink,
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.white,
-          ),
-          icon: const Icon(Icons.copy, size: 18),
-          label: const Text('Copy invite link'),
-        ),
-        if (_launchError != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            _launchError!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFFFF9BA1),
-              fontSize: 12,
-              height: 1.35,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Future<void> _openVideoCall() async {
-    final Uri? url = widget.videoCallUrl;
-    if (url == null || _isOpeningVideoCall) {
-      return;
-    }
-
-    setState(() {
-      _isOpeningVideoCall = true;
-      _launchError = null;
-    });
-
-    try {
-      final bool didLaunch = await launchUrl(
-        url,
-        mode: LaunchMode.externalApplication,
-      );
-
-      if (!didLaunch && mounted) {
-        setState(() {
-          _launchError = 'Could not open the video room. Copy the invite link instead.';
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _launchError = 'Could not open the video room. Copy the invite link instead.';
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isOpeningVideoCall = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _copyVideoCallLink() async {
-    final Uri? url = widget.videoCallUrl;
-    if (url == null) {
-      return;
-    }
-
-    await Clipboard.setData(ClipboardData(text: url.toString()));
-
-    if (!mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Video call link copied'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 }
